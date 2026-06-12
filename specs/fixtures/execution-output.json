@@ -1,0 +1,216 @@
+{
+  "format_version": 1,
+  "comparison": {
+    "model": "structured-json-equality",
+    "stdout_stderr": "byte-exact UTF-8 strings",
+    "json": "semantic JSON equality",
+    "record_order": "significant"
+  },
+  "cases": [
+    {
+      "id": "execute_text_context",
+      "role": "normative",
+      "definition": {
+        "options": [{ "name": "name", "kind": "primitive", "type": "string", "required": true }],
+        "args": [{ "name": "id", "kind": "primitive", "type": "string", "required": true }],
+        "outputMode": "text"
+      },
+      "argv": ["123", "--name", "snok"],
+      "cwd": "/workspace/project",
+      "stdin": { "kind": "text", "value": "hello\n" },
+      "commandBehavior": {
+        "stdout": "id=123 name=snok cwd=/workspace/project raw=123,--name,snok stdin=hello"
+      },
+      "expected": {
+        "exitCode": 0,
+        "stdout": "id=123 name=snok cwd=/workspace/project raw=123,--name,snok stdin=hello\n",
+        "stderr": "",
+        "output": { "kind": "text" }
+      },
+      "evidence": ["packages/rune/tests/core/run-command-pipeline.test.ts"]
+    },
+    {
+      "id": "execute_json_mode",
+      "role": "normative",
+      "definition": {
+        "json": true,
+        "options": [],
+        "args": []
+      },
+      "argv": ["--json"],
+      "commandBehavior": {
+        "outputLog": "suppressed",
+        "outputError": "diagnostic",
+        "returns": { "items": [1, 2, 3] }
+      },
+      "expected": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "diagnostic\n",
+        "jsonMode": true,
+        "output": { "kind": "json", "document": { "items": [1, 2, 3] } }
+      },
+      "evidence": [
+        "https://rune-cli.org/guides/json/",
+        "packages/rune/tests/core/run-command-pipeline.test.ts",
+        "packages/rune/tests/test-utils/run-command.test.ts"
+      ]
+    },
+    {
+      "id": "execute_json_flag_terminator",
+      "role": "normative",
+      "definition": {
+        "json": true,
+        "options": [{ "name": "value", "kind": "primitive", "type": "string" }],
+        "args": [{ "name": "rest", "kind": "primitive", "type": "string" }]
+      },
+      "argv": ["--", "--json"],
+      "expected": {
+        "jsonMode": false,
+        "parseArgv": ["--", "--json"],
+        "notes": ["The token --json is not removed by the framework when it appears after --."]
+      },
+      "comparisonRule": "Implementation-specific positional handling after -- may vary only if the command's declared passthrough model documents it; framework JSON activation must remain false.",
+      "evidence": ["packages/rune/tests/core/run-command-pipeline.test.ts"]
+    },
+    {
+      "id": "execute_jsonl_stream",
+      "role": "normative",
+      "definition": {
+        "jsonl": true,
+        "options": [],
+        "args": []
+      },
+      "argv": [],
+      "commandBehavior": {
+        "outputLog": "suppressed",
+        "records": [{ "id": 1 }, { "id": 2 }]
+      },
+      "expected": {
+        "exitCode": 0,
+        "stdout": "{\"id\":1}\n{\"id\":2}\n",
+        "stderr": "",
+        "jsonlMode": true,
+        "output": { "kind": "jsonl", "records": [{ "id": 1 }, { "id": 2 }] }
+      },
+      "evidence": [
+        "https://rune-cli.org/guides/json/",
+        "packages/rune/tests/core/run-command-pipeline.test.ts"
+      ]
+    },
+    {
+      "id": "execute_jsonl_midstream_failure",
+      "role": "normative",
+      "definition": {
+        "jsonl": true,
+        "options": [],
+        "args": []
+      },
+      "argv": [],
+      "commandBehavior": {
+        "recordsBeforeFailure": [{ "id": 1 }],
+        "failure": {
+          "kind": "app/failed",
+          "message": "stream failed",
+          "exitCode": 4
+        }
+      },
+      "expected": {
+        "exitCode": 4,
+        "stdout": "{\"id\":1}\n",
+        "error": {
+          "kind": "app/failed",
+          "message": "stream failed",
+          "exitCode": 4
+        },
+        "output": { "kind": "jsonl", "records": [{ "id": 1 }] }
+      },
+      "evidence": ["packages/rune/tests/core/run-command-pipeline.test.ts"]
+    },
+    {
+      "id": "execute_structured_error",
+      "role": "normative",
+      "definition": {
+        "json": true,
+        "options": [],
+        "args": []
+      },
+      "argv": ["--json"],
+      "commandBehavior": {
+        "throws": {
+          "kind": "config/not-found",
+          "message": "Config file was not found",
+          "hint": "Create a config file",
+          "details": { "path": "snok.config" },
+          "exitCode": 7
+        }
+      },
+      "expected": {
+        "exitCode": 7,
+        "error": {
+          "kind": "config/not-found",
+          "message": "Config file was not found",
+          "hint": "Create a config file",
+          "details": { "path": "snok.config" },
+          "exitCode": 7
+        },
+        "stderrJson": {
+          "error": {
+            "kind": "config/not-found",
+            "message": "Config file was not found",
+            "hint": "Create a config file",
+            "details": { "path": "snok.config" },
+            "exitCode": 7
+          }
+        }
+      },
+      "evidence": [
+        "https://rune-cli.org/guides/testing/",
+        "packages/rune/tests/test-utils/run-command.test.ts"
+      ]
+    },
+    {
+      "id": "execute_hooks_lifecycle",
+      "role": "normative",
+      "definition": {
+        "config": {
+          "options": [{ "name": "profile", "kind": "primitive", "type": "string", "default": "prod" }],
+          "locals": "returns workspace for profile",
+          "hooks": ["beforeRun", "afterRun", "onRunError"]
+        },
+        "command": {
+          "options": [],
+          "args": []
+        }
+      },
+      "argv": [],
+      "expectedSuccessOrder": ["parse", "locals", "beforeRun", "run", "afterRun"],
+      "expectedParseFailureOrder": ["parse"],
+      "expectedBeforeRunFailureOrder": ["parse", "locals", "beforeRun", "onRunError"],
+      "evidence": ["packages/rune/tests/core/run-command-pipeline.test.ts"]
+    },
+    {
+      "id": "execute_stdin_single_consume",
+      "role": "normative",
+      "stdin": { "kind": "text", "value": "hello\n" },
+      "runs": [
+        {
+          "commandBehavior": ["stdin.text"],
+          "expected": { "exitCode": 0, "text": "hello\n", "isPiped": true }
+        },
+        {
+          "commandBehavior": ["stdin.text", "stdin.bytes"],
+          "expected": {
+            "exitCode": 1,
+            "error": {
+              "kind": "rune/stdin-consumed",
+              "message": "stdin has already been consumed",
+              "exitCode": 1
+            }
+          }
+        }
+      ],
+      "evidence": ["packages/rune/tests/core/run-command-pipeline.test.ts"]
+    }
+  ]
+}

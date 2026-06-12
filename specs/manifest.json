@@ -1,0 +1,74 @@
+{
+  "format_version": 1,
+  "compatibility_target": "deterministic-behavioral",
+  "source": {
+    "repository": "Rune framework core",
+    "revision": "839ede33ce3644d3b60d5d5bd161a3217a425fda"
+  },
+  "artifacts": [
+    {
+      "path": "README.md",
+      "kind": "document",
+      "role": "normative",
+      "sha256": "76baee417ccce3bb084e234229542499eb71f45b0aab3bc300f37d67e5122f02"
+    },
+    {
+      "path": "conformance.md",
+      "kind": "document",
+      "role": "normative",
+      "sha256": "cf1997159ca00682676b214ebaa0f77a0886df5202ab6449caa4b41dea856791"
+    },
+    {
+      "path": "evidence.md",
+      "kind": "evidence",
+      "role": "evidence-only",
+      "sha256": "4da2258049bef2d62c40e64d3f122319df6a562a785977513767bc17b5d49a44"
+    },
+    {
+      "path": "fixtures/execution-output.json",
+      "kind": "fixture",
+      "role": "normative",
+      "sha256": "cd58ba78be95e9ec73d7477e2ded17d8df29252b7454264a98e4aef30019de8f",
+      "evidence": [
+        "packages/rune/tests/core/run-command-pipeline.test.ts",
+        "packages/rune/tests/test-utils/run-command.test.ts",
+        "https://rune-cli.org/guides/json/",
+        "https://rune-cli.org/guides/testing/"
+      ]
+    },
+    {
+      "path": "fixtures/fields-and-parsing.json",
+      "kind": "fixture",
+      "role": "normative",
+      "sha256": "8ceebc28effb194bffd9d63b5fc5cee2634b4bd66f384e8403e05fcdd72ea469",
+      "evidence": [
+        "packages/rune/tests/core/parse-command-args.test.ts",
+        "packages/rune/src/core/field-types.ts",
+        "https://rune-cli.org/guides/commands/",
+        "https://rune-cli.org/guides/standard-schema/"
+      ]
+    },
+    {
+      "path": "fixtures/help-rendering.json",
+      "kind": "fixture",
+      "role": "normative",
+      "sha256": "a766c3c71049f28721a3bec69bb164efb164cdc1bf6673e6606a6f05aed735f2",
+      "evidence": [
+        "packages/rune/tests/help/render-help-default.test.ts",
+        "packages/rune/tests/help/render-help-group.test.ts",
+        "packages/rune/tests/help/render-resolved-help.test.ts"
+      ]
+    },
+    {
+      "path": "fixtures/routing.json",
+      "kind": "fixture",
+      "role": "normative",
+      "sha256": "b57de8560a40027578b4e9c7b88421d159915064dcdc0a60112d2b5fee16e006",
+      "evidence": [
+        "packages/rune/tests/routing/resolve-command-route.test.ts",
+        "packages/rune/tests/manifest/generate/generate-manifest.test.ts",
+        "https://rune-cli.org/guides/routing/"
+      ]
+    }
+  ]
+}

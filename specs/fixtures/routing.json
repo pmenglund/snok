@@ -1,0 +1,111 @@
+{
+  "format_version": 1,
+  "comparison": {
+    "model": "structured-json-equality",
+    "array_order": "significant",
+    "paths": "logical-command-tree-paths"
+  },
+  "cases": [
+    {
+      "id": "route_nested_commands",
+      "role": "normative",
+      "purpose": "Discover executable commands and groups from a visible command tree.",
+      "tree": [
+        { "path": [], "kind": "group", "children": ["hello", "project", "user"] },
+        { "path": ["hello"], "kind": "command", "description": "Say hello" },
+        { "path": ["project"], "kind": "command", "description": "Project commands", "children": ["create", "list"] },
+        { "path": ["project", "create"], "kind": "command", "description": "Create a project" },
+        { "path": ["project", "list"], "kind": "command", "description": "List projects" },
+        { "path": ["user"], "kind": "group", "children": ["delete"] },
+        { "path": ["user", "delete"], "kind": "command", "description": "Delete a user" }
+      ],
+      "argv": ["project", "create", "--help"],
+      "expected": {
+        "kind": "command",
+        "matchedPath": ["project", "create"],
+        "remainingArgs": ["--help"],
+        "helpRequested": true
+      },
+      "evidence": ["packages/rune/tests/routing/resolve-command-route.test.ts"]
+    },
+    {
+      "id": "route_ignored_units",
+      "role": "normative",
+      "purpose": "Private helpers, group metadata, and colocated tests are not public commands.",
+      "logicalUnits": [
+        "commands/deploy",
+        "commands/deploy.test",
+        "commands/_deploy-logic",
+        "commands/project/_group",
+        "commands/project/_schema",
+        "commands/project/create",
+        "commands/project/create.spec"
+      ],
+      "expectedPublicCommands": [["deploy"], ["project", "create"]],
+      "expectedGroups": [["project"]],
+      "evidence": [
+        "https://rune-cli.org/guides/routing/",
+        "packages/rune/tests/manifest/generate/generate-manifest.test.ts"
+      ]
+    },
+    {
+      "id": "route_alias_chain",
+      "role": "normative",
+      "purpose": "Group and command aliases resolve to canonical matched paths.",
+      "tree": [
+        { "path": [], "kind": "group", "children": ["project"] },
+        { "path": ["project"], "kind": "group", "aliases": ["p"], "children": ["create"] },
+        { "path": ["project", "create"], "kind": "command", "aliases": ["c"] }
+      ],
+      "argv": ["p", "c"],
+      "expected": {
+        "kind": "command",
+        "matchedPath": ["project", "create"],
+        "remainingArgs": [],
+        "helpRequested": false
+      },
+      "evidence": ["packages/rune/tests/routing/resolve-command-route.test.ts"]
+    },
+    {
+      "id": "route_help_after_terminator",
+      "role": "normative",
+      "purpose": "Help flags after the argument terminator are command argv, not framework help.",
+      "tree": [
+        { "path": [], "kind": "group", "children": ["project"] },
+        { "path": ["project"], "kind": "command", "children": ["create"] },
+        { "path": ["project", "create"], "kind": "command" }
+      ],
+      "argv": ["project", "create", "--", "--help"],
+      "expected": {
+        "kind": "command",
+        "matchedPath": ["project", "create"],
+        "remainingArgs": ["--", "--help"],
+        "helpRequested": false
+      },
+      "evidence": ["packages/rune/tests/routing/resolve-command-route.test.ts"]
+    },
+    {
+      "id": "route_unknown_scoped_suggestion",
+      "role": "normative",
+      "purpose": "Unknown command suggestions are scoped to siblings and report canonical names.",
+      "tree": [
+        { "path": [], "kind": "group", "children": ["project", "user"] },
+        { "path": ["project"], "kind": "group", "children": ["create", "list"] },
+        { "path": ["project", "create"], "kind": "command", "aliases": ["c"] },
+        { "path": ["project", "list"], "kind": "command" },
+        { "path": ["user"], "kind": "group", "children": ["delete"] },
+        { "path": ["user", "delete"], "kind": "command" }
+      ],
+      "argv": ["project", "cretae"],
+      "expected": {
+        "kind": "unknown",
+        "attemptedPath": ["project", "cretae"],
+        "matchedPath": ["project"],
+        "unknownSegment": "cretae",
+        "availableChildNames": ["create", "list"],
+        "suggestions": ["create"]
+      },
+      "evidence": ["packages/rune/tests/routing/resolve-command-route.test.ts"]
+    }
+  ]
+}

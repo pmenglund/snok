@@ -1,0 +1,142 @@
+{
+  "format_version": 1,
+  "comparison": {
+    "model": "semantic-help-checks",
+    "section_order": "significant",
+    "byte_exact": false
+  },
+  "cases": [
+    {
+      "id": "help_command_sections",
+      "role": "normative",
+      "helpData": {
+        "kind": "command",
+        "cliName": "my-cli",
+        "path": ["text", "transform"],
+        "description": "Transform the input text",
+        "options": [
+          {
+            "name": "mode",
+            "typeHint": "upper|lower",
+            "description": "Transformation to apply",
+            "defaultLabel": "\"upper\""
+          },
+          {
+            "name": "force",
+            "short": "f",
+            "typeHint": "boolean"
+          }
+        ],
+        "args": [
+          {
+            "name": "input",
+            "typeHint": "string",
+            "required": true
+          }
+        ],
+        "examples": ["my-cli text transform hello --mode upper"]
+      },
+      "expected": {
+        "sectionsInOrder": ["description", "usage", "options", "arguments", "examples"],
+        "contains": [
+          "Transform the input text",
+          "Usage:",
+          "my-cli text transform",
+          "--mode",
+          "upper|lower",
+          "Transformation to apply",
+          "--force",
+          "-f",
+          "input",
+          "my-cli text transform hello --mode upper"
+        ]
+      },
+      "evidence": [
+        "https://rune-cli.org/getting-started/quick-start/",
+        "packages/rune/tests/help/render-help-default.test.ts"
+      ]
+    },
+    {
+      "id": "help_group_sections",
+      "role": "normative",
+      "helpData": {
+        "kind": "group",
+        "cliName": "my-cli",
+        "path": ["project"],
+        "description": "Manage projects",
+        "children": [
+          { "name": "create", "aliases": ["c"], "description": "Create a project" },
+          { "name": "list", "aliases": [], "description": "List projects" }
+        ],
+        "examples": ["my-cli project list"]
+      },
+      "expected": {
+        "sectionsInOrder": ["description", "usage", "commands", "examples"],
+        "contains": [
+          "Manage projects",
+          "Usage:",
+          "my-cli project",
+          "create",
+          "c",
+          "Create a project",
+          "list",
+          "List projects",
+          "my-cli project list"
+        ]
+      },
+      "evidence": ["packages/rune/tests/help/render-help-group.test.ts"]
+    },
+    {
+      "id": "help_unknown_command",
+      "role": "normative",
+      "helpData": {
+        "kind": "unknown",
+        "cliName": "my-cli",
+        "attemptedPath": ["project", "cretae"],
+        "matchedPath": ["project"],
+        "unknownSegment": "cretae",
+        "availableChildNames": ["create", "list"],
+        "suggestions": ["create"]
+      },
+      "expected": {
+        "contains": [
+          "Unknown command",
+          "project cretae",
+          "create",
+          "list"
+        ],
+        "suggestions": ["create"],
+        "mustNotContain": ["user delete"]
+      },
+      "evidence": [
+        "packages/rune/tests/help/render-resolved-help.test.ts",
+        "packages/rune/tests/routing/resolve-command-route.test.ts"
+      ]
+    },
+    {
+      "id": "help_renderer_precedence",
+      "role": "normative",
+      "scenarios": [
+        {
+          "name": "command renderer wins",
+          "commandHelpRenderer": "returns command-specific help",
+          "globalHelpRenderer": "returns global help",
+          "expectedRenderer": "command"
+        },
+        {
+          "name": "global renderer handles group",
+          "commandHelpRenderer": "not applicable",
+          "globalHelpRenderer": "returns global help",
+          "expectedRenderer": "global"
+        },
+        {
+          "name": "renderer failure falls back",
+          "commandHelpRenderer": "throws",
+          "globalHelpRenderer": "absent",
+          "expectedRenderer": "default"
+        }
+      ],
+      "evidence": ["packages/rune/tests/help/render-resolved-help.test.ts"]
+    }
+  ]
+}

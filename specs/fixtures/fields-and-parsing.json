@@ -1,0 +1,223 @@
+{
+  "format_version": 1,
+  "comparison": {
+    "model": "structured-json-equality",
+    "array_order": "significant",
+    "omitted_fields": "must be absent unless expected object includes them"
+  },
+  "cases": [
+    {
+      "id": "parse_primitives_and_defaults",
+      "role": "normative",
+      "definition": {
+        "options": [
+          { "name": "name", "kind": "primitive", "type": "string", "required": true },
+          { "name": "force", "kind": "primitive", "type": "boolean", "short": "f" },
+          { "name": "count", "kind": "primitive", "type": "number", "default": 1 }
+        ],
+        "args": [
+          { "name": "id", "kind": "primitive", "type": "string", "required": true }
+        ]
+      },
+      "argv": ["123", "--name", "snok", "-f"],
+      "env": {},
+      "expected": {
+        "ok": true,
+        "args": { "id": "123" },
+        "options": { "name": "snok", "force": true, "count": 1 },
+        "rawArgs": ["123", "--name", "snok", "-f"]
+      },
+      "evidence": ["packages/rune/tests/core/parse-command-args.test.ts"]
+    },
+    {
+      "id": "parse_env_precedence",
+      "role": "normative",
+      "definition": {
+        "options": [
+          { "name": "port", "kind": "primitive", "type": "number", "env": "PORT", "default": 3000 }
+        ],
+        "args": []
+      },
+      "runs": [
+        {
+          "argv": ["--port", "4000"],
+          "env": { "PORT": "5000" },
+          "expectedOptions": { "port": 4000 }
+        },
+        {
+          "argv": [],
+          "env": { "PORT": "5000" },
+          "expectedOptions": { "port": 5000 }
+        },
+        {
+          "argv": [],
+          "env": {},
+          "expectedOptions": { "port": 3000 }
+        }
+      ],
+      "evidence": ["packages/rune/tests/core/parse-command-args.test.ts"]
+    },
+    {
+      "id": "parse_invalid_env",
+      "role": "normative",
+      "definition": {
+        "options": [
+          { "name": "port", "kind": "primitive", "type": "number", "env": "PORT", "default": 3000 }
+        ],
+        "args": []
+      },
+      "argv": [],
+      "env": { "PORT": "bad" },
+      "expected": {
+        "ok": false,
+        "error": {
+          "category": "parse",
+          "messageContains": [
+            "Invalid value for option --port",
+            "environment variable PORT",
+            "Expected number"
+          ]
+        }
+      },
+      "evidence": ["packages/rune/tests/core/parse-command-args.test.ts"]
+    },
+    {
+      "id": "parse_repeatable_order",
+      "role": "normative",
+      "definition": {
+        "options": [
+          { "name": "tag", "kind": "primitive", "type": "string", "multiple": true },
+          { "name": "level", "kind": "primitive", "type": "number", "multiple": true, "short": "l" }
+        ],
+        "args": []
+      },
+      "argv": ["--tag", "alpha", "--tag", "beta", "-l", "1", "-l", "2"],
+      "env": {},
+      "expected": {
+        "ok": true,
+        "options": { "tag": ["alpha", "beta"], "level": [1, 2] }
+      },
+      "evidence": ["packages/rune/tests/core/parse-command-args.test.ts"]
+    },
+    {
+      "id": "parse_enum_matching",
+      "role": "normative",
+      "definition": {
+        "options": [
+          { "name": "mode", "kind": "enum", "values": ["dev", "prod"], "default": "dev" },
+          { "name": "shard", "kind": "enum", "values": [1, 2], "required": true }
+        ],
+        "args": []
+      },
+      "runs": [
+        {
+          "argv": ["--shard", "1"],
+          "expected": { "ok": true, "options": { "mode": "dev", "shard": 1 } }
+        },
+        {
+          "argv": ["--shard", "1.0"],
+          "expected": { "ok": false, "error": { "category": "parse", "messageContains": ["Expected one of", "1, 2"] } }
+        }
+      ],
+      "evidence": [
+        "packages/rune/src/core/field-types.ts",
+        "packages/rune/tests/core/parse-command-args.test.ts"
+      ]
+    },
+    {
+      "id": "parse_negatable_boolean",
+      "role": "normative",
+      "definition": {
+        "options": [
+          { "name": "color", "kind": "primitive", "type": "boolean", "default": true }
+        ],
+        "args": []
+      },
+      "runs": [
+        {
+          "argv": [],
+          "expected": { "ok": true, "options": { "color": true } }
+        },
+        {
+          "argv": ["--no-color"],
+          "expected": { "ok": true, "options": { "color": false } }
+        },
+        {
+          "argv": ["--color", "--no-color"],
+          "expected": { "ok": false, "error": { "category": "parse", "messageContains": ["Conflicting options", "--color", "--no-color"] } }
+        }
+      ],
+      "evidence": ["packages/rune/tests/core/parse-command-args.test.ts"]
+    },
+    {
+      "id": "parse_schema_contract",
+      "role": "normative",
+      "definition": {
+        "options": [
+          {
+            "name": "count",
+            "kind": "schema",
+            "validator": "coerce positive integer",
+            "omittedBehavior": "missing"
+          },
+          {
+            "name": "verbose",
+            "kind": "schema",
+            "flag": true,
+            "validator": "optional boolean"
+          }
+        ],
+        "args": [
+          {
+            "name": "id",
+            "kind": "schema",
+            "validator": "uuid string"
+          }
+        ]
+      },
+      "argv": ["550e8400-e29b-41d4-a716-446655440000", "--count", "2", "--verbose"],
+      "expected": {
+        "ok": true,
+        "args": { "id": "550e8400-e29b-41d4-a716-446655440000" },
+        "options": { "count": 2, "verbose": true }
+      },
+      "comparisonRule": "Implementations may use any validator library but must pass the same raw values and expose the same transformed result or parse failure.",
+      "evidence": [
+        "https://rune-cli.org/guides/standard-schema/",
+        "packages/rune/tests/core/parse-command-args.test.ts"
+      ]
+    },
+    {
+      "id": "parse_failures",
+      "role": "normative",
+      "definition": {
+        "options": [
+          { "name": "name", "kind": "primitive", "type": "string", "required": true },
+          { "name": "force", "kind": "primitive", "type": "boolean" }
+        ],
+        "args": [
+          { "name": "id", "kind": "primitive", "type": "string", "required": true }
+        ]
+      },
+      "runs": [
+        {
+          "argv": ["123"],
+          "expected": { "ok": false, "error": { "category": "parse", "messageContains": ["Missing required option", "--name"] } }
+        },
+        {
+          "argv": ["123", "--name", "snok", "--name", "again"],
+          "expected": { "ok": false, "error": { "category": "parse", "messageContains": ["Duplicate option", "--name"] } }
+        },
+        {
+          "argv": ["123", "--name", "snok", "--unknown"],
+          "expected": { "ok": false, "error": { "category": "parse", "messageContains": ["Unknown option"] } }
+        },
+        {
+          "argv": ["123", "extra", "--name", "snok"],
+          "expected": { "ok": false, "error": { "category": "parse", "messageContains": ["Unexpected argument", "extra"] } }
+        }
+      ],
+      "evidence": ["packages/rune/tests/core/parse-command-args.test.ts"]
+    }
+  ]
+}
