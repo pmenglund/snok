@@ -23,6 +23,9 @@ Instructions for Codex and other coding agents working in this repository.
 - Keep docs and examples accurate for the current public API names, including
   `NewTree`, `AddCommand`, `AddGroup`, `CommandDefinition`, `GroupDefinition`,
   `Field`, `RunCommand`, and `CobraCommand`.
+- When adding or restructuring Snok-powered app commands, consult
+  `docs/codex-command-authoring.md` for the expected command registration,
+  structure, output, error, and testing patterns.
 
 ## Go Development
 
