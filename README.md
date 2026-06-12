@@ -192,6 +192,13 @@ List the CLI commands:
 snok --help
 ```
 
+Initialize agent-facing Snok command-authoring instructions in an existing
+repository:
+
+```sh
+snok init
+```
+
 Link a local Go command package:
 
 ```sh
