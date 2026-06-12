@@ -170,7 +170,13 @@ go run ./examples/text greet Ada
 go run ./examples/text greet Ada --title Dr --shout
 go run ./examples/json sum 2 3 --json
 go run ./examples/jsonl events --count 3
+go run ./examples/modular greet Ada --title Dr --shout
 ```
+
+The modular example keeps `examples/modular/greet.go` as a self-contained
+command file. To add another command in the same style, create another Go file
+that calls `registerCommand` from `init` and adds its command to the shared
+tree.
 
 ## The `snok` CLI
 
